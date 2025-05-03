@@ -61,7 +61,7 @@
 	}
 
 	.trending {
-		@apply mt-20;
+		@apply mt-10;
 
 		& ul {
 			@apply flex flex-row overflow-y-auto gap-5 -mt-10 w-full hide-scrollbar;
@@ -97,7 +97,7 @@
 	}
 
 	.all-movies {
-		@apply space-y-9;
+		@apply mt-10 space-y-8;
 
 		& ul {
 			@apply grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4;

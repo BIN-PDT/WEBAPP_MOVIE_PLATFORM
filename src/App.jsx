@@ -3,7 +3,8 @@ import Search from "./components/Search";
 import Spinner from "./components/Spinner";
 import MovieCard from "./components/MovieCard";
 import { useDebounce } from "react-use";
-import { updateSearchCount } from "./appwrite";
+import { getTrendingMovies, updateSearchCount } from "./appwrite";
+import TrendingCard from "./components/TrendingCard";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 const API_ACCESS_TOKEN = import.meta.env.VITE_TMDB_ACCESS_TOKEN;
@@ -18,6 +19,7 @@ const API_OPTIONS = {
 function App() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
+	const [trendingMovies, setTrendingMovies] = useState([]);
 	const [movieList, setMovieList] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -58,6 +60,12 @@ function App() {
 		return () => controller.abort();
 	}, [debouncedSearchTerm]);
 
+	useEffect(() => {
+		getTrendingMovies()
+			.then((movies) => setTrendingMovies(movies))
+			.catch((error) => console.log(error));
+	}, []);
+
 	return (
 		<main>
 			<div className="pattern" />
@@ -75,8 +83,22 @@ function App() {
 					/>
 				</header>
 
+				{trendingMovies.length > 0 && (
+					<section className="trending">
+						<h2 className="font-awesome">Trending Movies</h2>
+
+						<ul>
+							{trendingMovies.map((movie, index) => (
+								<li key={movie.id}>
+									<TrendingCard index={index} movie={movie} />
+								</li>
+							))}
+						</ul>
+					</section>
+				)}
+
 				<section className="all-movies">
-					<h2 className="mt-10 font-awesome">All movies</h2>
+					<h2 className="font-awesome">Popular Movies</h2>
 
 					{isLoading ? (
 						<Spinner />
