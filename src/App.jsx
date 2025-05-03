@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Search from "./components/Search";
 import Spinner from "./components/Spinner";
 import MovieCard from "./components/MovieCard";
+import { useDebounce } from "react-use";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 const API_ACCESS_TOKEN = import.meta.env.VITE_TMDB_ACCESS_TOKEN;
@@ -18,10 +19,11 @@ function App() {
 	const [errorMessage, setErrorMessage] = useState("");
 	const [movieList, setMovieList] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-	const fetchMovies = (query = "") => {
-		setErrorMessage("");
-		setMovieList([]);
+	useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
+
+	const fetchMovies = (signal, query = "") => {
 		setIsLoading(true);
 
 		const endpoint = `${API_BASE_URL}/${
@@ -29,11 +31,15 @@ function App() {
 				? `search/movie?query=${encodeURIComponent(query)}`
 				: "discover/movie?sort_by=popularity.desc"
 		}`;
-		fetch(endpoint, API_OPTIONS)
+		fetch(endpoint, { ...API_OPTIONS, signal })
 			.then((response) => response.json())
-			.then((data) => setMovieList(data.results))
+			.then((data) => {
+				setMovieList(data.results);
+				setErrorMessage("");
+			})
 			.catch((error) => {
 				console.log(error);
+				setMovieList([]);
 				setErrorMessage(
 					"Error occurs while loading movies. Please try again later."
 				);
@@ -41,7 +47,12 @@ function App() {
 			.finally(() => setIsLoading(false));
 	};
 
-	useEffect(() => fetchMovies(searchTerm), [searchTerm]);
+	useEffect(() => {
+		const controller = new AbortController();
+		fetchMovies(controller.signal, debouncedSearchTerm);
+
+		return () => controller.abort();
+	}, [debouncedSearchTerm]);
 
 	return (
 		<main>
