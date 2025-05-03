@@ -162,3 +162,7 @@
 		display: none;
 	}
 }
+
+@utility font-awesome {
+	@apply font-new-amsterdam tracking-wider;
+}
