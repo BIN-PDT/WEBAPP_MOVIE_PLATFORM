@@ -18,16 +18,16 @@ const API_OPTIONS = {
 
 function App() {
 	const [searchTerm, setSearchTerm] = useState("");
-	const [errorMessage, setErrorMessage] = useState("");
-	const [trendingMovies, setTrendingMovies] = useState([]);
-	const [movieList, setMovieList] = useState([]);
-	const [isLoading, setIsLoading] = useState(false);
 	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-	useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
+	const [isTrendingLoading, setIsTrendingLoading] = useState(false);
+	const [trendingMovies, setTrendingMovies] = useState([]);
 
-	const fetchMovies = (signal, query = "") => {
-		setIsLoading(true);
+	const [isPopularLoading, setIsPopularLoading] = useState(false);
+	const [movieList, setMovieList] = useState([]);
+
+	const fetchPopularMovies = (signal, query = "") => {
+		setIsPopularLoading(true);
 
 		const endpoint = `${API_BASE_URL}/${
 			query
@@ -38,7 +38,6 @@ function App() {
 			.then((response) => response.json())
 			.then((data) => {
 				setMovieList(data.results);
-				setErrorMessage("");
 				if (query && data.results.length > 0) {
 					updateSearchCount(data.results[0]);
 				}
@@ -46,25 +45,31 @@ function App() {
 			.catch((error) => {
 				console.log(error);
 				setMovieList([]);
-				setErrorMessage(
-					"Error occurs while loading movies. Please try again later."
-				);
 			})
-			.finally(() => setIsLoading(false));
+			.finally(() => setIsPopularLoading(false));
 	};
+
+	const fetchTrendingMovies = () => {
+		setIsTrendingLoading(true);
+		getTrendingMovies()
+			.then((movies) => setTrendingMovies(movies))
+			.catch((error) => {
+				console.log(error);
+				setTrendingMovies([]);
+			})
+			.finally(() => setIsTrendingLoading(false));
+	};
+
+	useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
 
 	useEffect(() => {
 		const controller = new AbortController();
-		fetchMovies(controller.signal, debouncedSearchTerm);
+		fetchPopularMovies(controller.signal, debouncedSearchTerm);
 
 		return () => controller.abort();
 	}, [debouncedSearchTerm]);
 
-	useEffect(() => {
-		getTrendingMovies()
-			.then((movies) => setTrendingMovies(movies))
-			.catch((error) => console.log(error));
-	}, []);
+	useEffect(() => fetchTrendingMovies(), []);
 
 	return (
 		<main>
@@ -87,23 +92,28 @@ function App() {
 					<section className="trending">
 						<h2 className="font-awesome">Trending Movies</h2>
 
-						<ul>
-							{trendingMovies.map((movie, index) => (
-								<li key={movie.id}>
-									<TrendingCard index={index} movie={movie} />
-								</li>
-							))}
-						</ul>
+						{isTrendingLoading ? (
+							<Spinner />
+						) : (
+							<ul>
+								{trendingMovies.map((movie, index) => (
+									<li key={movie.id}>
+										<TrendingCard
+											index={index}
+											movie={movie}
+										/>
+									</li>
+								))}
+							</ul>
+						)}
 					</section>
 				)}
 
 				<section className="all-movies">
 					<h2 className="font-awesome">Popular Movies</h2>
 
-					{isLoading ? (
+					{isPopularLoading ? (
 						<Spinner />
-					) : errorMessage ? (
-						<p className="text-red-500">{errorMessage}</p>
 					) : (
 						<ul>
 							{movieList.map((movie) => (
