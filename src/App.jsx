@@ -19,12 +19,16 @@ function App() {
 	const [movieList, setMovieList] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
 
-	const fetchMovies = () => {
+	const fetchMovies = (query = "") => {
 		setErrorMessage("");
 		setMovieList([]);
 		setIsLoading(true);
 
-		const endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+		const endpoint = `${API_BASE_URL}/${
+			query
+				? `search/movie?query=${encodeURIComponent(query)}`
+				: "discover/movie?sort_by=popularity.desc"
+		}`;
 		fetch(endpoint, API_OPTIONS)
 			.then((response) => response.json())
 			.then((data) => setMovieList(data.results))
@@ -37,7 +41,7 @@ function App() {
 			.finally(() => setIsLoading(false));
 	};
 
-	useEffect(() => fetchMovies(), []);
+	useEffect(() => fetchMovies(searchTerm), [searchTerm]);
 
 	return (
 		<main>
